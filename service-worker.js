@@ -2,7 +2,7 @@
 // que funcione sin internet. Al publicar cambios, sube VERSION: el navegador descarga la nueva
 // versión y la app ofrece «Actualizar». Las rutas son relativas (sirve en una subcarpeta).
 
-const VERSION = 'v5.0.0';
+const VERSION = 'v5.0.1';
 const CACHE = `resolvedor-conicas-${VERSION}`;
 
 // Todos los archivos que usa la app (la prueba tests/pwa.test.js verifica que no falte ninguno).

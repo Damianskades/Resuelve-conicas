@@ -11,8 +11,16 @@ function parte(numero, titulo, clase = '') {
   return art;
 }
 
-export function renderSolucion(contenedor, res) {
+const planos = new WeakMap();
+
+export function limpiarSolucion(contenedor) {
+  planos.get(contenedor)?.destruir();
+  planos.delete(contenedor);
   contenedor.innerHTML = '';
+}
+
+export function renderSolucion(contenedor, res, { mostrarGrafica = true } = {}) {
+  limpiarSolucion(contenedor);
   // 4) Respuesta primero: es lo que se quiere comparar con lo hecho en papel
   const resp = parte('4', 'Respuesta final', 'respuesta');
   resp.append(crear('p', { class: 'respuesta-titulo', texto: res.respuesta.titulo }));
@@ -27,7 +35,9 @@ export function renderSolucion(contenedor, res) {
   // 5) Gráfica
   let plano = null;
   const graf = parte('5', 'Gráfica', 'grafica');
-  if (res.escena) {
+  if (!mostrarGrafica) {
+    contenedor.append(resp);
+  } else if (res.escena) {
     const env = crear('div', { class: 'lienzo-envoltura' });
     const canvas = crear('canvas', { class: 'lienzo', tabindex: '0', 'aria-label': 'Gráfica de la solución. Arrastra para mover; pellizca o usa la rueda para acercar.' });
     const zoom = crear('div', { class: 'zoom' },
@@ -39,6 +49,7 @@ export function renderSolucion(contenedor, res) {
     graf.append(env, leyenda);
     contenedor.append(resp, graf);
     plano = new Plano(canvas);
+    planos.set(contenedor, plano);
     plano.dibujar(res.escena, VISIBLES_POR_DEFECTO);
     plano.encuadrar(res.escena.encuadre);
     renderLeyenda(leyenda, res.escena, VISIBLES_POR_DEFECTO);

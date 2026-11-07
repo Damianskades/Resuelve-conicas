@@ -163,13 +163,13 @@ const NUMEROS_TRAS = [
   ['ejeMenor', /eje menor|(?<![a-z0-9])2b\s*(?==)/g],
   ['ejeMayor', /eje mayor|(?<![a-z0-9])2a\s*(?==)/g],
   ['luz', /separad[oa]s?|distancia entre (?:las |los )?(?:torres|apoyos|pilares)|entre (?:las )?torres|(?<![a-z])luz\b|\bancho\b|\bbase\b|\bclaro\b/g],
-  ['altura', /\baltura\b|\balto\b/g],
+  ['altura', /\baltura\b|\balto\b|\bse elevan\b/g],
   ['tiempo', /diferencia de (?:los )?tiempos?|δt|delta t/g],
-  ['velocidad', /velocidad/g],
+  ['velocidad', /velocidad|\bse[ñn]al viaja a\b/g],
 ];
 const NUMEROS_ANTES = [
   ['altura', new RegExp(`${NUM}\\s*(?:m|metros|cm|km|pies)?\\s+de\\s+(?:altura|alto)`, 'g')],
-  ['luz', new RegExp(`${NUM}\\s*(?:m|metros|cm|km|pies)?\\s+de\\s+(?:ancho|luz|largo|claro)`, 'g')],
+  ['luz', new RegExp(`${NUM}\\s*(?:m|metros|cm|km|pies)?\\s+de\\s+(?:ancho|luz|largo|claro|base)`, 'g')],
 ];
 
 function extraerNumeros(t, n, ocupado) {
@@ -211,6 +211,7 @@ function extraerListas(t, n) {
     }
   }
   for (const m of n.matchAll(new RegExp(`a\\s+${NUM}\\s*(?:m|metros|cm|km)?\\s+del\\s+centro`, 'g'))) listas.x.push(m[1]);
+  for (const m of n.matchAll(new RegExp(`\\ba\\s+${NUM}\\s*(?:m|metros|cm|km)?\\s+de\\s+altura`, 'g'))) listas.y.push(m[1]);
   return listas;
 }
 

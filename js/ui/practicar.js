@@ -6,7 +6,7 @@ import { generarEjercicio, ejercicioGrafica, tiposDisponibles } from '../problem
 import { resolverDesdeEcuacion } from '../problemas/desde-general.js';
 import { GRUPOS } from '../problemas/tipos.js';
 import { crear, escaparHtml, renderLeyenda, ocultarError, mostrarError } from './componentes.js';
-import { renderSolucion } from './vista-solucion.js';
+import { renderSolucion, limpiarSolucion } from './vista-solucion.js';
 import { conectarZoom } from './graficar.js';
 
 const CLAVE_MARCADOR = 'resolvedor-conicas:marcador';
@@ -14,7 +14,9 @@ const CLAVE_MARCADOR = 'resolvedor-conicas:marcador';
 function leerMarcador() {
   try {
     const m = JSON.parse(localStorage.getItem(CLAVE_MARCADOR) ?? '{}');
-    return { aciertos: Number(m.aciertos) || 0, intentos: Number(m.intentos) || 0 };
+    const intentos = Number.isSafeInteger(m.intentos) && m.intentos >= 0 ? m.intentos : 0;
+    const aciertos = Number.isSafeInteger(m.aciertos) && m.aciertos >= 0 ? Math.min(m.aciertos, intentos) : 0;
+    return { aciertos, intentos };
   } catch {
     return { aciertos: 0, intentos: 0 };
   }
@@ -88,7 +90,8 @@ export function iniciarPracticar(raiz) {
     $('#pr-alternativas').innerHTML = '';
     $('#pr-feedback').textContent = '';
     $('#pr-feedback').className = 'pr-feedback';
-    $('#pr-solucion').innerHTML = '';
+    limpiarSolucion($('#pr-solucion'));
+    planoGrafica.dibujar(null);
     $('#pr-autoevaluacion').hidden = true;
     $('#pr-ver').hidden = true;
     $('#pr-revelar').hidden = true;
@@ -172,6 +175,7 @@ export function iniciarPracticar(raiz) {
 
   function siguientePaso() {
     const g = estado.grafica;
+    if (!g || estado.paso >= g.pasos.length - 1) return;
     estado.paso++;
     const { pasos } = g;
     const grafica = $('#pr-grafica');
@@ -191,11 +195,8 @@ export function iniciarPracticar(raiz) {
       $('#pr-autoevaluacion').hidden = false;
       const res = resolverDesdeEcuacion(g.ecuacion);
       if (res.ok) {
-        const det = crear('div');
-        renderSolucion(det, res);
         // En "Grafica tú" la gráfica ya está arriba: se muestra solo la respuesta y el procedimiento
-        det.querySelector('.grafica')?.remove();
-        $('#pr-solucion').replaceChildren(...det.children);
+        renderSolucion($('#pr-solucion'), res, { mostrarGrafica: false });
       }
     }
     grafica.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

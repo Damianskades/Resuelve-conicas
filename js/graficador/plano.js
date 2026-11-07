@@ -87,6 +87,8 @@ export class Plano {
     this.gesto = null;
     this.pendiente = false;
     this.porEncuadrar = null;
+    this.eventos = new AbortController();
+    this.destruido = false;
     this._eventos();
     this.observador = new ResizeObserver(() => this._medir());
     this.observador.observe(canvas);
@@ -110,6 +112,15 @@ export class Plano {
   }
 
   // ---------- Acciones ----------
+
+  destruir() {
+    this.destruido = true;
+    this.eventos.abort();
+    this.observador.disconnect();
+    this.punteros.clear();
+    this.gesto = null;
+    this.escena = null;
+  }
 
   dibujar(escena, visibles) {
     if (escena !== undefined) this.escena = escena;
@@ -179,11 +190,11 @@ export class Plano {
   }
 
   pedirDibujo() {
-    if (this.pendiente) return;
+    if (this.destruido || this.pendiente) return;
     this.pendiente = true;
     requestAnimationFrame(() => {
       this.pendiente = false;
-      this._render();
+      if (!this.destruido) this._render();
     });
   }
 
@@ -214,14 +225,16 @@ export class Plano {
 
   _eventos() {
     const c = this.canvas;
-    c.addEventListener('pointerdown', (ev) => {
+    const escuchar = (objeto, tipo, funcion, opciones = {}) => objeto.addEventListener(tipo, funcion, { ...opciones, signal: this.eventos.signal });
+    const al = (tipo, funcion, opciones) => escuchar(c, tipo, funcion, opciones);
+    al('pointerdown', (ev) => {
       if (ev.pointerType === 'mouse' && ev.button !== 0) return;
       c.setPointerCapture?.(ev.pointerId);
       this.punteros.set(ev.pointerId, this._pos(ev));
       this._iniciarGesto();
       ev.preventDefault();
     });
-    c.addEventListener('pointermove', (ev) => {
+    al('pointermove', (ev) => {
       if (!this.punteros.has(ev.pointerId)) return;
       this.punteros.set(ev.pointerId, this._pos(ev));
       this._moverGesto();
@@ -230,10 +243,10 @@ export class Plano {
       if (!this.punteros.delete(ev.pointerId)) return;
       this._iniciarGesto();
     };
-    c.addEventListener('pointerup', terminar);
-    c.addEventListener('pointercancel', terminar);
-    c.addEventListener('lostpointercapture', terminar);
-    c.addEventListener(
+    al('pointerup', terminar);
+    al('pointercancel', terminar);
+    al('lostpointercapture', terminar);
+    al(
       'wheel',
       (ev) => {
         ev.preventDefault();
@@ -243,11 +256,11 @@ export class Plano {
       },
       { passive: false },
     );
-    c.addEventListener('dblclick', (ev) => {
+    al('dblclick', (ev) => {
       const [px, py] = this._pos(ev);
       this.zoom(ev.shiftKey ? 0.5 : 2, px, py);
     });
-    c.addEventListener('keydown', (ev) => {
+    al('keydown', (ev) => {
       const d = 40;
       const acciones = {
         ArrowLeft: () => this.mover(d, 0),
@@ -265,7 +278,7 @@ export class Plano {
         f();
       }
     });
-    window.addEventListener('resize', () => this._medir());
+    escuchar(window, 'resize', () => this._medir());
   }
 
   _iniciarGesto() {

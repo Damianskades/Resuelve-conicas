@@ -5,6 +5,19 @@ import { detectar, normalizar } from '../js/problemas/detector.js';
 import { separarAlternativas, compararAlternativas, interpretarParte } from '../js/problemas/alternativas.js';
 import { resolverPregunta } from '../js/problemas/solucionador.js';
 import { fmtDecimal } from '../js/math/formato.js';
+import { generarEjercicio, tiposDisponibles } from '../js/problemas/practica.js';
+
+test('pegar los ejercicios de práctica recupera los datos y la misma solución en los 35 tipos', () => {
+  for (const { id: tipo } of tiposDisponibles()) {
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const e = generarEjercicio({ tipo, semilla });
+      assert.ok(e.ok, e.error);
+      const { r } = flujo(e.enunciado);
+      assert.equal(r.general, e.res.general, `${tipo}: ${e.enunciado}`);
+      assert.deepEqual(r.valores, e.res.valores, `${tipo}: se perdió un dato al pegar el enunciado`);
+    }
+  }
+});
 
 // Detecta, resuelve con el formulario llenado y compara las alternativas.
 function flujo(texto) {

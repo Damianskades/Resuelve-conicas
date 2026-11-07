@@ -10,7 +10,7 @@ import { crearRecta, fmtRecta } from '../math/rectas.js';
 import { normalizarGeneral, fmtGeneral, ORDEN_COEF } from '../math/general.js';
 import { igual as igualFr } from '../math/fracciones.js';
 import { resolverPregunta } from './solucionador.js';
-import { tipoPorId, TIPOS_PREGUNTA } from './tipos.js';
+import { TIPOS_PREGUNTA } from './tipos.js';
 import * as circunferencia from '../conicas/circunferencia.js';
 import * as parabola from '../conicas/parabola.js';
 import * as elipse from '../conicas/elipse.js';
@@ -92,8 +92,8 @@ export function conicaAleatoria(rnd, tipo = uno(rnd, ['circunferencia', 'parabol
 // Cada uno devuelve { crudos, enunciado } con datos que dan una solución válida.
 
 export const GENERADORES = {
-  ecuacion: (rnd) => {
-    const m = conicaAleatoria(rnd);
+  ecuacion: (rnd, conica) => {
+    const m = conicaAleatoria(rnd, conica);
     return { crudos: { ecuacion: m.general }, enunciado: `Identifica la cónica, escribe su forma ordinaria y halla sus elementos: ${m.general}` };
   },
   'circ-centro-radio': (rnd) => {
@@ -308,8 +308,8 @@ export const GENERADORES = {
     const forma = uno(rnd, ['colgante', 'arco']);
     const xs = [Lg / 8, Lg / 4, (3 * Lg) / 8];
     const enunciado = forma === 'colgante'
-      ? `El cable de un puente colgante cuelga entre dos torres separadas ${Lg} m que se elevan ${H} m sobre el punto más bajo del cable. Halla la ecuación del cable y las alturas en x = ${xs.join(', ')}.`
-      : `Un arco parabólico tiene ${Lg} m de base y ${H} m de altura. Halla su ecuación y las alturas en x = ${xs.join(', ')}.`;
+      ? `El cable de un puente colgante cuelga entre dos torres separadas ${Lg} m que se elevan ${H} m sobre el punto más bajo del cable. Halla la ecuación del cable y las alturas en x = ${xs.map(N).join('; ')}.`
+      : `Un arco parabólico tiene ${Lg} m de base y ${H} m de altura. Halla su ecuación y las alturas en x = ${xs.map(N).join('; ')}.`;
     return { crudos: { forma, L: N(Lg), H: N(H), xs: xs.map(N).join('; ') }, enunciado };
   },
   'app-trayectoria': (rnd) => {
@@ -325,7 +325,7 @@ export const GENERADORES = {
     let [W, H] = [uno(rnd, [10, 12, 16, 20, 30]), uno(rnd, [3, 4, 5, 6, 8])];
     if (H * 2 === W) H += 1;
     const x = W / 4;
-    return { crudos: { W: N(W), H: N(H), xs: N(x) }, enunciado: `Un túnel tiene forma de semielipse de ${W} m de ancho y ${H} m de altura. ¿Qué altura tiene a ${x} m del centro?` };
+    return { crudos: { W: N(W), H: N(H), xs: N(x) }, enunciado: `Un túnel tiene forma de semielipse de ${W} m de ancho y ${H} m de altura. ¿Qué altura tiene a ${N(x)} m del centro?` };
   },
   'app-orbita': (rnd) => {
     const [e, cual, Lg] = [uno(rnd, ['0,1', '0,2', '0,25', '0,5']), uno(rnd, ['mayor', 'menor']), uno(rnd, [100, 200, 1000])];
@@ -347,24 +347,26 @@ export const GENERADORES = {
 // ---------- Ejercicios ----------
 
 const GRUPO = Object.fromEntries(TIPOS_PREGUNTA.map((t) => [t.id, t.conica]));
+const CONICAS = ['circunferencia', 'parabola', 'elipse', 'hiperbola'];
 
 export function tiposDisponibles(conica = 'todas', { soloAlternativas = false } = {}) {
   return TIPOS_PREGUNTA.filter((t) => GENERADORES[t.id])
-    .filter((t) => conica === 'todas' || t.conica === conica)
+    .filter((t) => conica === 'todas' || t.conica === conica || (t.id === 'ecuacion' && CONICAS.includes(conica)))
     .filter((t) => !soloAlternativas || ADMITE_ALTERNATIVAS.has(t.id));
 }
 
 // Genera un ejercicio válido (reintenta si los números no dan una solución).
 export function generarEjercicio({ conica = 'todas', tipo = 'todos', semilla = Date.now(), alternativas = false } = {}) {
   const rnd = crearAzar(semilla);
-  const candidatos = tipo !== 'todos' ? [tipoPorId(tipo)] : tiposDisponibles(conica, { soloAlternativas: alternativas });
-  if (!candidatos.length || !candidatos[0]) return { ok: false, error: 'No hay ejercicios con esos filtros.' };
+  const candidatos = tiposDisponibles(conica, { soloAlternativas: alternativas }).filter((t) => tipo === 'todos' || t.id === tipo);
+  if (!candidatos.length) return { ok: false, error: 'No hay ejercicios con esos filtros.' };
   for (let intento = 0; intento < 30; intento++) {
     const t = uno(rnd, candidatos);
-    const { crudos, enunciado } = GENERADORES[t.id](rnd);
+    const { crudos, enunciado } = GENERADORES[t.id](rnd, CONICAS.includes(conica) ? conica : undefined);
     const res = resolverPregunta(t.id, crudos);
     if (!res.ok || res.degenerada) continue;
-    const ejercicio = { ok: true, tipo: t.id, grupo: GRUPO[t.id], titulo: t.titulo, crudos, enunciado, res, semilla };
+    const grupo = t.id === 'ecuacion' && CONICAS.includes(conica) ? conica : GRUPO[t.id];
+    const ejercicio = { ok: true, tipo: t.id, grupo, titulo: t.titulo, crudos, enunciado, res, semilla };
     if (alternativas) {
       const alt = crearAlternativas(res, rnd);
       if (!alt) continue;
@@ -507,9 +509,9 @@ export function pasosGrafica(m) {
   let guias = e.puntos.filter((p) => p.tipo === 'guia');
   if (m.tipo === 'circunferencia') {
     const { h, k, r } = m.valores;
-    guias = [[r, 0], [-r, 0], [0, r], [0, -r]].map(([dx, dy]) => ({
-      x: h.v + (dx ? Math.sign(dx) * r.v : 0),
-      y: k.v + (dy ? Math.sign(dy) * r.v : 0),
+    guias = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({
+      x: h.v + dx * r.v,
+      y: k.v + dy * r.v,
       tipo: 'guia',
     }));
     agregar(`Marcamos cuatro puntos a distancia r = ${fmtCorto(r)} del centro (arriba, abajo, izquierda y derecha).`, { puntos: guias });

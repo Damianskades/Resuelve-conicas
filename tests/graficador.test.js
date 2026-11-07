@@ -1,7 +1,7 @@
 // Partes puras del graficador y de la interfaz (sin DOM).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pasoCuadricula, formatoEje, estaVisible } from '../js/graficador/plano.js';
+import { Plano, pasoCuadricula, formatoEje, estaVisible } from '../js/graficador/plano.js';
 import { mathAHtml } from '../js/ui/componentes.js';
 
 test('paso de cuadrícula 1-2-5 según el zoom', () => {
@@ -32,4 +32,42 @@ test('fracciones apiladas en HTML y texto escapado', () => {
     '<span class="frac"><span class="frac-num">(x + 4)²</span><span class="frac-den">9</span></span>',
   );
   assert.equal(mathAHtml('a < b'), 'a &lt; b');
+});
+
+test('descartar una gráfica libera observadores y eventos sin volver a dibujarla', (t) => {
+  const ventana = new EventTarget();
+  ventana.devicePixelRatio = 1;
+  const pendientes = [];
+  let desconectado = false;
+  let mediciones = 0;
+  const anteriores = { window: globalThis.window, ResizeObserver: globalThis.ResizeObserver, requestAnimationFrame: globalThis.requestAnimationFrame };
+  globalThis.requestAnimationFrame = (f) => pendientes.push(f);
+  globalThis.window = ventana;
+  globalThis.ResizeObserver = class {
+    observe() {}
+    disconnect() { desconectado = true; }
+  };
+  t.after(() => {
+    for (const [nombre, valor] of Object.entries(anteriores)) {
+      if (valor === undefined) delete globalThis[nombre];
+      else globalThis[nombre] = valor;
+    }
+  });
+  const canvas = new EventTarget();
+  canvas.getContext = () => ({});
+  canvas.getBoundingClientRect = () => { mediciones++; return { width: 0, height: 0 }; };
+  const plano = new Plano(canvas);
+  plano.dibujar({ puntos: [] });
+  plano.destruir();
+  const inicial = plano.escala;
+  ventana.dispatchEvent(new Event('resize'));
+  const evento = new Event('keydown');
+  evento.key = '+';
+  canvas.dispatchEvent(evento);
+  assert.equal(plano.escala, inicial);
+  assert.equal(mediciones, 1);
+  assert.ok(desconectado);
+  assert.equal(plano.escena, null);
+  plano._render = () => assert.fail('una gráfica descartada no debe dibujarse');
+  for (const f of pendientes) f();
 });

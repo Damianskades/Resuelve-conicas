@@ -6,6 +6,7 @@ import {
 } from '../js/problemas/practica.js';
 import { compararAlternativas } from '../js/problemas/alternativas.js';
 import { TIPOS_PREGUNTA } from '../js/problemas/tipos.js';
+import { resolver as resolverCircunferencia } from '../js/conicas/circunferencia.js';
 
 test('hay generador para los 35 tipos de pregunta', () => {
   assert.equal(tiposDisponibles().length, TIPOS_PREGUNTA.length);
@@ -93,4 +94,79 @@ test('Grafica tú: pasos acumulativos que terminan con la curva', () => {
   assert.equal(g.conica.tipo, 'elipse');
   assert.match(g.ecuacion, /= 0$/);
   assert.match(g.pasos.map((p) => p.titulo).join(' '), /focos/);
+});
+
+test('Grafica tú: los cuatro puntos guía son reales y están sobre la circunferencia', () => {
+  for (const r of ['√5', '√10', '2√3', '3/2', '3']) {
+    const m = resolverCircunferencia({ h: '−2', k: '1/2', r });
+    const guias = pasosGrafica(m)[1].escena.puntos.filter((p) => p.tipo === 'guia');
+    assert.equal(guias.length, 4);
+    assert.equal(new Set(guias.map((p) => `${p.x};${p.y}`)).size, 4);
+    for (const p of guias) {
+      assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y), `radio ${r}: punto inválido`);
+      assert.ok(Math.abs((p.x - m.valores.h.v) ** 2 + (p.y - m.valores.k.v) ** 2 - m.valores.r2.v) < 1e-10);
+    }
+  }
+});
+
+test('práctica desde la ecuación general respeta el filtro de cada cónica', () => {
+  for (const conica of ['circunferencia', 'parabola', 'elipse', 'hiperbola']) {
+    assert.ok(tiposDisponibles(conica).some((t) => t.id === 'ecuacion'));
+    for (let semilla = 1; semilla <= 40; semilla++) {
+      const e = generarEjercicio({ conica, tipo: 'ecuacion', semilla });
+      assert.ok(e.ok, e.error);
+      assert.equal(e.res.tipo, conica);
+      assert.equal(e.grupo, conica);
+    }
+  }
+});
+
+test('filtros incompatibles o tipos sin alternativas devuelven un error claro', () => {
+  for (const filtros of [
+    { tipo: 'no-existe' },
+    { conica: 'elipse', tipo: 'par-vertice-foco' },
+    { tipo: 'circ-posicion-recta', alternativas: true },
+    { tipo: 'ecuacion', alternativas: true },
+  ]) {
+    const e = generarEjercicio(filtros);
+    assert.equal(e.ok, false);
+    assert.match(e.error, /filtros/);
+  }
+});
+
+test('todos los tipos admitidos generan cuatro alternativas con una única solución matemática', () => {
+  for (const tipo of ADMITE_ALTERNATIVAS) {
+    for (let s = 1; s <= 40; s++) {
+      const e = generarEjercicio({ tipo, semilla: s * 1009, alternativas: true });
+      assert.ok(e.ok, `${tipo}, semilla ${s}: ${e.error}`);
+      assert.equal(e.alternativas.length, 4);
+      const correctas = e.alternativas.filter((a) => a.correcta).map((a) => a.letra);
+      assert.equal(correctas.length, 1);
+      assert.deepEqual(compararAlternativas(e.alternativas, e.res).correctas, correctas, `${tipo}, semilla ${s}`);
+    }
+  }
+});
+
+test('las curvas generadas satisfacen sus ecuaciones generales', () => {
+  const vista = { xmin: -30, xmax: 30, ymin: -30, ymax: 30, escala: 30 };
+  for (const { id: tipo } of tiposDisponibles()) {
+    for (let semilla = 1; semilla <= 30; semilla++) {
+      const e = generarEjercicio({ tipo, semilla: semilla * 1009 });
+      assert.ok(e.ok, e.error);
+      for (const m of e.res.conicas ?? []) {
+        assert.ok(m.coef, `${tipo}: la ecuación debería ser exacta`);
+        const c = Object.fromEntries(Object.entries(m.coef).map(([k, f]) => [k, f.n / f.d]));
+        for (const curva of m.escena.curvas) {
+          for (const tramo of curva.muestrear(vista)) {
+            for (const [x, y] of tramo) {
+              assert.ok(Number.isFinite(x) && Number.isFinite(y));
+              const terminos = [c.A * x * x, c.B * x * y, c.C * y * y, c.D * x, c.E * y, c.F];
+              const residual = terminos.reduce((s, t) => s + t, 0);
+              assert.ok(Math.abs(residual) <= 1e-8 * Math.max(1, ...terminos.map(Math.abs)), `${tipo}: ${m.general}, punto (${x}; ${y})`);
+            }
+          }
+        }
+      }
+    }
+  }
 });
