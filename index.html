@@ -1,0 +1,289 @@
+<!doctype html>
+<!-- Página única del Resolvedor de Cónicas: circunferencia, parábola, elipse e hipérbola. -->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Resuelve paso a paso ejercicios de circunferencia, parábola, elipse e hipérbola, con su gráfica.">
+  <meta name="theme-color" content="#FFD400">
+  <title>Resolvedor de Cónicas</title>
+  <link rel="icon" href="iconos/icono.svg" type="image/svg+xml">
+  <link rel="icon" href="iconos/icono-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cónicas">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <a class="saltar" href="#principal">Saltar al contenido</a>
+  <header class="cabecera">
+    <div class="contenedor">
+      <h1>Resolvedor de Cónicas</h1>
+      <p class="subtitulo">Circunferencia · Parábola · Elipse · Hipérbola</p>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Secciones">
+    <div class="contenedor nav-lista">
+      <button type="button" class="boton nav-boton" data-seccion="resolver" aria-current="page">Resolver</button>
+      <button type="button" class="boton nav-boton" data-seccion="graficar">Graficar</button>
+      <button type="button" class="boton nav-boton" data-seccion="practicar">Practicar</button>
+    </div>
+  </nav>
+
+  <main id="principal" class="contenedor">
+    <noscript><p class="tarjeta">Esta página necesita JavaScript para funcionar.</p></noscript>
+
+    <!-- ================= RESOLVER ================= -->
+    <section id="seccion-resolver" class="seccion" aria-labelledby="titulo-resolver">
+      <h2 id="titulo-resolver" class="sr-only">Resolver</h2>
+
+      <div class="modos-resolver" role="group" aria-label="Cómo quieres ingresar la pregunta">
+        <button type="button" class="boton" data-modo="pegar" aria-pressed="true">Pegar pregunta</button>
+        <button type="button" class="boton" data-modo="elegir" aria-pressed="false">Elegir tipo</button>
+      </div>
+
+      <div class="tarjeta" id="modo-pegar">
+        <h2 class="titulo-tarjeta">Pega la pregunta</h2>
+        <label for="pregunta" class="etiqueta">Enunciado (con sus alternativas a, b, c, d si las tiene)</label>
+        <textarea id="pregunta" class="campo campo-pregunta" rows="6" spellcheck="false"
+          placeholder="Ej.: Determina la ecuación general de la parábola. Vértice: (−1, 2); Foco: (−1, 0). a. x²−2x+8y+15=0 b. …"></textarea>
+        <div class="acciones">
+          <button type="button" class="boton boton-primario" id="btn-analizar">Analizar</button>
+          <button type="button" class="boton" id="btn-ejemplo-enunciado">Ejemplo de examen</button>
+          <button type="button" class="boton" id="btn-limpiar-pregunta">Limpiar</button>
+        </div>
+        <p id="nombre-ejemplo-enunciado" class="nota" aria-live="polite"></p>
+        <div id="error-pegar" class="error" role="alert" hidden></div>
+        <div id="deteccion" class="deteccion" hidden aria-live="polite">
+          <h3 id="det-titulo" class="det-titulo"></h3>
+          <p id="det-confianza" class="nota"></p>
+          <div id="det-opciones" class="det-opciones"></div>
+          <p class="etiqueta">Lo que encontré en el texto</p>
+          <div id="det-texto" class="texto-marcado"></div>
+          <dl id="det-datos" class="datos det-datos"></dl>
+          <p id="det-pide" class="nota"></p>
+          <p id="det-alternativas" class="nota"></p>
+        </div>
+      </div>
+
+      <div class="tarjeta selector" id="selector-tipo" hidden>
+        <h2 class="titulo-tarjeta">¿Qué datos te da el problema?</h2>
+        <label for="buscar-tipo" class="etiqueta">Buscar tipo de pregunta</label>
+        <input id="buscar-tipo" class="campo" type="search" autocomplete="off" spellcheck="false"
+          placeholder="Ej.: tres puntos, foco directriz, LORAN">
+        <p id="conteo-tipos" class="nota" aria-live="polite"></p>
+        <div id="lista-tipos" class="lista-tipos"></div>
+      </div>
+
+      <form id="form-resolver" class="tarjeta entrada" novalidate hidden>
+        <p id="tipo-grupo" class="tipo-grupo"></p>
+        <h2 id="tipo-titulo" class="titulo-tarjeta"></h2>
+        <p id="tipo-descripcion" class="nota"></p>
+        <div id="campos-tipo" class="campos-tipo"></div>
+        <p class="ayuda">Puntos: <code>(−1; 4)</code>, <code>(−1, 4)</code> o <code>−1 4</code>. Rectas: <code>2x − y + 1 = 0</code> o <code>y = 2x + 1</code>. Números: <code>3</code>, <code>−2,5</code>, <code>3/4</code>, <code>2√5</code>.</p>
+        <div class="teclas" id="teclas-tipo" aria-label="Teclas extra">
+          <button type="button" class="boton tecla" data-tecla="−" aria-label="menos">−</button>
+          <button type="button" class="boton tecla" data-tecla="√" aria-label="raíz cuadrada">√</button>
+          <button type="button" class="boton tecla" data-tecla="/" aria-label="fracción">/</button>
+          <button type="button" class="boton tecla" data-tecla="; " aria-label="punto y coma">;</button>
+          <button type="button" class="boton tecla" data-tecla="(">(</button>
+          <button type="button" class="boton tecla" data-tecla=")">)</button>
+          <button type="button" class="boton tecla" data-tecla="²" aria-label="al cuadrado">²</button>
+          <button type="button" class="boton tecla" data-tecla="=" aria-label="igual">=</button>
+          <button type="button" class="boton tecla" data-tecla="x">x</button>
+          <button type="button" class="boton tecla" data-tecla="y">y</button>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="boton boton-primario">Resolver</button>
+          <button type="button" class="boton" id="btn-ejemplo-tipo">Ejemplo de clase</button>
+          <button type="button" class="boton" id="btn-limpiar">Limpiar</button>
+          <button type="button" class="boton" id="btn-cambiar-tipo">Cambiar de tipo</button>
+        </div>
+        <p id="nombre-ejemplo-tipo" class="nota" aria-live="polite"></p>
+        <div id="error-resolver" class="error" role="alert" hidden></div>
+      </form>
+
+      <div id="solucion" class="solucion" hidden>
+        <div class="solucion-texto">
+          <article class="tarjeta parte">
+            <h2><span class="parte-num">1</span> Datos</h2>
+            <dl id="sol-datos" class="datos"></dl>
+          </article>
+          <article class="tarjeta parte">
+            <h2><span class="parte-num">2</span> Fórmulas usadas</h2>
+            <ul id="sol-formulas" class="formulas"></ul>
+          </article>
+          <article class="tarjeta parte">
+            <h2><span class="parte-num">3</span> Procedimiento</h2>
+            <ol id="sol-pasos" class="pasos"></ol>
+          </article>
+          <article class="tarjeta parte respuesta" aria-live="polite">
+            <h2><span class="parte-num">4</span> Respuesta final</h2>
+            <p id="sol-respuesta-titulo" class="respuesta-titulo"></p>
+            <div id="sol-respuesta" class="respuesta-lineas"></div>
+            <div class="acciones">
+              <button type="button" class="boton" id="btn-copiar">Copiar respuesta</button>
+              <span id="copiado" class="nota" aria-live="polite"></span>
+            </div>
+          </article>
+          <article class="tarjeta parte" id="sol-alternativas-tarjeta" hidden>
+            <h2><span class="parte-num">✓</span> Alternativas</h2>
+            <p id="sol-alt-resumen" class="alt-resumen"></p>
+            <ol id="sol-alternativas" class="alternativas"></ol>
+          </article>
+        </div>
+        <article class="tarjeta parte grafica grafica-fija">
+          <h2><span class="parte-num">5</span> Gráfica</h2>
+          <p id="sin-grafica" class="nota" hidden></p>
+          <div class="lienzo-envoltura" id="envoltura-resolver">
+            <canvas id="lienzo-resolver" class="lienzo" tabindex="0" aria-label="Gráfica de la cónica. Arrastra para mover; pellizca o usa la rueda para acercar."></canvas>
+            <div class="zoom">
+              <button type="button" class="boton" data-zoom="mas" aria-label="Acercar">+</button>
+              <button type="button" class="boton" data-zoom="menos" aria-label="Alejar">−</button>
+              <button type="button" class="boton boton-centrar" data-zoom="centrar">Centrar</button>
+            </div>
+          </div>
+          <ul id="leyenda-resolver" class="leyenda" aria-label="Leyenda"></ul>
+          <fieldset class="interruptores" id="int-resolver"><legend>Mostrar en la gráfica</legend></fieldset>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================= GRAFICAR ================= -->
+    <section id="seccion-graficar" class="seccion" aria-labelledby="titulo-graficar" hidden>
+      <h2 id="titulo-graficar" class="sr-only">Graficar</h2>
+      <div class="layout">
+        <div class="tarjeta panel">
+          <div class="pestanas" role="tablist" aria-label="Cónica">
+            <button type="button" class="boton" role="tab" data-conica="circunferencia" aria-selected="true">Circunferencia</button>
+            <button type="button" class="boton" role="tab" data-conica="parabola" aria-selected="false">Parábola</button>
+            <button type="button" class="boton" role="tab" data-conica="elipse" aria-selected="false">Elipse</button>
+            <button type="button" class="boton" role="tab" data-conica="hiperbola" aria-selected="false">Hipérbola</button>
+          </div>
+
+          <fieldset id="orientacion" class="segmentado" hidden>
+            <legend id="orientacion-titulo">Eje</legend>
+            <button type="button" class="boton" data-orientacion="horizontal" aria-pressed="true">Horizontal</button>
+            <button type="button" class="boton" data-orientacion="vertical" aria-pressed="false">Vertical</button>
+          </fieldset>
+
+          <p class="ecuacion-modelo" id="modelo"></p>
+          <div id="campos" class="campos"></div>
+          <div class="teclas" id="teclas-parametros" aria-label="Teclas extra">
+            <button type="button" class="boton tecla" data-tecla="−" aria-label="menos">−</button>
+            <button type="button" class="boton tecla" data-tecla="√" aria-label="raíz cuadrada">√</button>
+            <button type="button" class="boton tecla" data-tecla="/" aria-label="fracción">/</button>
+          </div>
+          <div id="error-graficar" class="error" role="alert" hidden></div>
+
+          <button type="button" class="boton boton-ancho" id="btn-ejemplo">Cargar ejemplo de clase</button>
+          <p id="nombre-ejemplo" class="nota" aria-live="polite"></p>
+
+          <fieldset class="interruptores" id="int-graficar"><legend>Mostrar en la gráfica</legend></fieldset>
+        </div>
+
+        <div class="columna-grafica">
+          <div class="tarjeta grafica">
+            <div class="lienzo-envoltura">
+              <canvas id="lienzo-graficar" class="lienzo" tabindex="0" aria-label="Gráfica de la cónica. Arrastra para mover; pellizca o usa la rueda para acercar."></canvas>
+              <div class="zoom">
+                <button type="button" class="boton" data-zoom="mas" aria-label="Acercar">+</button>
+                <button type="button" class="boton" data-zoom="menos" aria-label="Alejar">−</button>
+                <button type="button" class="boton boton-centrar" data-zoom="centrar">Centrar</button>
+              </div>
+            </div>
+            <ul id="leyenda-graficar" class="leyenda" aria-label="Leyenda"></ul>
+          </div>
+
+          <div class="tarjeta">
+            <h3>Ecuación ordinaria</h3>
+            <div id="g-ordinaria" class="ecuacion"></div>
+            <h3>Ecuación general</h3>
+            <div id="g-general" class="ecuacion"></div>
+            <h3>Elementos</h3>
+            <div id="g-elementos" class="elementos"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PRACTICAR ================= -->
+    <section id="seccion-practicar" class="seccion" aria-labelledby="titulo-practicar" hidden>
+      <div class="tarjeta">
+        <h2 id="titulo-practicar" class="titulo-tarjeta">Practicar</h2>
+        <div class="pr-modos" role="group" aria-label="Modo de práctica">
+          <button type="button" class="boton" data-pr-modo="papel" aria-pressed="true">Resolver en papel</button>
+          <button type="button" class="boton" data-pr-modo="alternativas" aria-pressed="false">Modo alternativas</button>
+          <button type="button" class="boton" data-pr-modo="grafica" aria-pressed="false">Grafica tú</button>
+        </div>
+        <p id="pr-descripcion" class="nota">Resuelve y grafica en papel; luego toca «Ver respuesta» y compara.</p>
+        <div class="pr-filtros">
+          <div>
+            <label for="pr-conica" class="etiqueta">Cónica</label>
+            <select id="pr-conica" class="campo"></select>
+          </div>
+          <div id="pr-fila-tipo">
+            <label for="pr-tipo-select" class="etiqueta">Tipo de pregunta</label>
+            <select id="pr-tipo-select" class="campo"></select>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="button" class="boton boton-primario" id="pr-nuevo">Nuevo ejercicio</button>
+        </div>
+        <div class="pr-marcador-fila">
+          <p id="pr-marcador" class="pr-marcador" aria-live="polite"></p>
+          <button type="button" class="boton" id="pr-reiniciar">Reiniciar contador</button>
+        </div>
+        <div id="pr-error" class="error" role="alert" hidden></div>
+      </div>
+
+      <article id="pr-ejercicio" class="tarjeta" hidden aria-live="polite">
+        <p id="pr-grupo" class="tipo-grupo"></p>
+        <p id="pr-enunciado" class="pr-enunciado"></p>
+        <ol id="pr-alternativas" class="alternativas pr-alternativas"></ol>
+        <p id="pr-feedback" class="pr-feedback"></p>
+        <div class="acciones">
+          <button type="button" class="boton boton-primario" id="pr-ver" hidden>Ver respuesta</button>
+          <button type="button" class="boton boton-primario" id="pr-revelar" hidden>Revelar</button>
+        </div>
+        <div id="pr-grafica" class="pr-grafica" hidden>
+          <p id="pr-paso" class="pr-paso" aria-live="polite"></p>
+          <div class="lienzo-envoltura">
+            <canvas id="pr-lienzo" class="lienzo" tabindex="0" aria-label="Gráfica paso a paso de la cónica. Arrastra para mover; pellizca o usa la rueda para acercar."></canvas>
+            <div class="zoom">
+              <button type="button" class="boton" data-zoom="mas" aria-label="Acercar">+</button>
+              <button type="button" class="boton" data-zoom="menos" aria-label="Alejar">−</button>
+              <button type="button" class="boton boton-centrar" data-zoom="centrar">Centrar</button>
+            </div>
+          </div>
+          <ul id="pr-leyenda" class="leyenda" aria-label="Leyenda"></ul>
+        </div>
+        <div id="pr-autoevaluacion" class="pr-autoevaluacion" hidden>
+          <p class="etiqueta">¿Te salió bien?</p>
+          <div class="acciones">
+            <button type="button" class="boton" data-acierto="si">Sí, acerté</button>
+            <button type="button" class="boton" data-acierto="no">No, me equivoqué</button>
+          </div>
+        </div>
+      </article>
+
+      <div id="pr-solucion" class="pr-solucion"></div>
+    </section>
+  </main>
+
+  <div id="aviso-actualizacion" class="aviso-actualizacion" role="status" hidden>
+    <p>Hay una versión nueva de la app.</p>
+    <button type="button" class="boton boton-primario" id="btn-actualizar">Actualizar</button>
+  </div>
+
+  <footer class="pie">
+    <div class="contenedor">
+      <p>Álgebra Lineal y Geometría Analítica · Unidad 3: cónicas. Funciona sin internet una vez abierta.</p>
+    </div>
+  </footer>
+</body>
+</html>

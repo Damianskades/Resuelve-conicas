@@ -1,0 +1,9 @@
+{
+  "name": "resolvedor-conicas",
+  "private": true,
+  "description": "Solo para que Node trate los .js como módulos ES. No hay dependencias ni es necesario instalar nada.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

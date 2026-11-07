@@ -1,0 +1,8 @@
+@'
+node_modules/
+.firebase/
+.env
+.env.*
+!.env.example
+*-debug.log*
+'@ | Set-Content -Encoding utf8 .gitignore

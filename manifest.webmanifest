@@ -1,0 +1,20 @@
+{
+  "name": "Resolvedor de Cónicas",
+  "short_name": "Cónicas",
+  "description": "Resuelve paso a paso ejercicios de circunferencia, parábola, elipse e hipérbola, con su gráfica. Funciona sin internet.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F1F1F1",
+  "theme_color": "#FFD400",
+  "categories": ["education"],
+  "icons": [
+    { "src": "iconos/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "iconos/icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
